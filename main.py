@@ -1,14 +1,19 @@
 import csv
 import json
+import unittest
 from datetime import datetime, date
 from typing import Tuple, Union, List
 
 
 class CsvProcess:
     def __init__(self, file_path: str) -> None:
+        self.file_path = file_path
         self.data = self.read_csv(file_path)
 
     def fill_spaces(self) -> None:
+        if self.data[1][1] == "" or self.data[1][2] == "":
+            raise ValueError("Impossible to fill data")
+
         for i in range(2, len(self.data)):
             prev_temp, prev_util = float(self.data[i - 1][1]), float(
                 self.data[i - 1][2]
@@ -80,9 +85,22 @@ class CsvProcess:
         self.data[0] = headers
 
     def read_csv(self, file_path: str) -> List[List[str]]:
-        with open(file_path, "r", newline="") as file:
-            reader = csv.reader(file, delimiter=";")
-            data = list(reader)
+        try:
+            with open(file_path, "r", newline="") as file:
+                reader = csv.reader(file, delimiter=";")
+                data = list(reader)
+
+            if len(data) == 0:
+                raise ValueError(f"File {file_path} is empty")
+            elif len(data) == 1:
+                raise ValueError(f"File {file_path} have no data")
+
+        except FileNotFoundError:
+            raise FileNotFoundError(f"File {file_path} not found")
+        except ValueError as e:
+            raise e
+        except Exception as e:
+            raise Exception(f"Unexpected {e}")
 
         return data
 
@@ -123,14 +141,6 @@ def main(file_path: str) -> None:
 
 
 if __name__ == "__main__":
-    main("noway.csv")
-    # main('zero.csv')
-    # main('headers.csv')
-    # main('first_blank.csv')
-
-    # data1 = [
-    #    ['temperature', 'utilization', 'timestamp']
-    #    ['0', '59.64', '37.0', '2024-09-27 07:08:32.306912899']
-    #    ['1', '59.18', '23.0', '2024-09-27 07:08:37.306912899']
-    #    ['2', '', '', '2024-09-27 07:08:42.306912899']
-    # ]
+    # main('tests/test_data.csv')
+    # main('tests/first_blank.csv')
+    main("tests/no_data.csv")
