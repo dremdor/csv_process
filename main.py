@@ -1,7 +1,7 @@
 import csv
 import json
 from datetime import datetime, date
-from typing import Tuple, Union, List
+from typing import Tuple, Union, List, Dict
 
 
 class CsvProcess:
@@ -9,8 +9,21 @@ class CsvProcess:
         self.file_path = file_path
         self.data = self.read_csv(file_path)
 
+    def data_to_float(self) -> None:
+        try:
+            for line in self.data[1:]:
+                if line[1] != "":
+                    line[1] = float(line[1])
+                if line[2] != "":
+                    line[2] = float(line[2])
+
+        except ValueError as e:
+            raise ValueError(f"Corrupted data: {e}")
+
     def fill_spaces(self) -> None:
-        if self.data[1][1] == "" or self.data[1][2] == "":
+        self.data_to_float()
+
+        if not self.data[1][1] or not self.data[1][2]:
             raise ValueError("Impossible to fill data")
 
         for i in range(2, len(self.data)):
@@ -19,10 +32,10 @@ class CsvProcess:
             )
 
             if self.data[i][1] == "":
-                self.data[i][1] = str(prev_temp)
+                self.data[i][1] = prev_temp
 
             if self.data[i][2] == "":
-                self.data[i][2] = str(prev_util)
+                self.data[i][2] = prev_util
 
     def count_stats(self, param: int) -> Tuple[float, float, float]:
         min_value = max_value = float(self.data[1][param])
@@ -64,7 +77,7 @@ class CsvProcess:
 
         for line in self.data[1:]:
             for stats in stats_data:
-                line.append(str(stats))
+                line.append(stats)
 
             if (float(line[1]) - avg_temp) > 0.3 * max_temp:
                 line.append("WARNING")
@@ -74,10 +87,15 @@ class CsvProcess:
     def time_sort(self) -> None:
         headers = ["index"] + self.data[0][1:]
 
-        sorted_data = sorted(
-            self.data[1:],
-            key=lambda x: datetime.strptime(x[3][:19], "%Y-%m-%d %H:%M:%S").timestamp(),
-        )
+        try:
+            sorted_data = sorted(
+                self.data[1:],
+                key=lambda x: datetime.strptime(
+                    x[3][:19], "%Y-%m-%d %H:%M:%S"
+                ).timestamp(),
+            )
+        except ValueError as e:
+            raise ValueError(f"Invalid timestamp: {e}")
 
         for i, line in enumerate(sorted_data):
             line[0] = str(i)
@@ -100,7 +118,7 @@ class CsvProcess:
         except ValueError as e:
             raise e
         except Exception as e:
-            raise Exception(f"Unexpected {e}")
+            raise Exception(f"Unexpected: {e}")
 
         return data
 
@@ -113,7 +131,7 @@ class CsvProcess:
             writer = csv.writer(file, delimiter=";")
             writer.writerows(self.data)
 
-    def write_json(self, save_path: str) -> None:
+    def write_json(self, save_path: str) -> List[Dict[str, Union[str, float]]]:
         headers = self.data[0]
         json_list = []
 
@@ -127,6 +145,8 @@ class CsvProcess:
             newline="",
         ) as file:
             json.dump(json_list, file, indent=4)
+
+        return json_list
 
 
 def main(file_path: str) -> None:
@@ -142,6 +162,3 @@ def main(file_path: str) -> None:
 
 if __name__ == "__main__":
     main("tests/test_data.csv")
-    main("tests/correct1.csv")
-    main("tests/correct2.csv")
-    main("tests/correct3.csv")
