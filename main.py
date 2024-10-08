@@ -1,6 +1,5 @@
 import csv
 import json
-import unittest
 from datetime import datetime, date
 from typing import Tuple, Union, List
 
@@ -20,10 +19,10 @@ class CsvProcess:
             )
 
             if self.data[i][1] == "":
-                self.data[i][1] = prev_temp
+                self.data[i][1] = str(prev_temp)
 
             if self.data[i][2] == "":
-                self.data[i][2] = prev_util
+                self.data[i][2] = str(prev_util)
 
     def count_stats(self, param: int) -> Tuple[float, float, float]:
         min_value = max_value = float(self.data[1][param])
@@ -65,7 +64,7 @@ class CsvProcess:
 
         for line in self.data[1:]:
             for stats in stats_data:
-                line.append(stats)
+                line.append(str(stats))
 
             if (float(line[1]) - avg_temp) > 0.3 * max_temp:
                 line.append("WARNING")
@@ -75,14 +74,15 @@ class CsvProcess:
     def time_sort(self) -> None:
         headers = ["index"] + self.data[0][1:]
 
-        self.data[1:].sort(
+        sorted_data = sorted(
+            self.data[1:],
             key=lambda x: datetime.strptime(x[3][:19], "%Y-%m-%d %H:%M:%S").timestamp(),
         )
 
-        for i, line in enumerate(self.data):
+        for i, line in enumerate(sorted_data):
             line[0] = str(i)
 
-        self.data[0] = headers
+        self.data = [headers] + sorted_data
 
     def read_csv(self, file_path: str) -> List[List[str]]:
         try:
@@ -122,7 +122,7 @@ class CsvProcess:
             json_list.append(line_json)
 
         with open(
-            f'{save_path}/{datetime.now().strftime("%Y-%m-%d_%H:%M:%S")}.csv',
+            f'{save_path}/{datetime.now().strftime("%Y-%m-%d_%H:%M:%S")}.json',
             "w",
             newline="",
         ) as file:
@@ -131,10 +131,15 @@ class CsvProcess:
 
 def main(file_path: str) -> None:
     data = CsvProcess(file_path)
+    for item in data.data:
+        print(item)
     data.time_sort()
 
     data.fill_spaces()
     data.add_columns()
+
+    for item in data.data:
+        print(item)
 
     data.write_csv("logs/csv")
     data.write_json("logs/json")
@@ -142,5 +147,6 @@ def main(file_path: str) -> None:
 
 if __name__ == "__main__":
     # main('tests/test_data.csv')
-    # main('tests/first_blank.csv')
-    main("tests/no_data.csv")
+    main("tests/correct1.csv")
+    # main('tests/correct2.csv')
+    # main('tests/correct3.csv')
