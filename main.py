@@ -131,22 +131,17 @@ class CsvProcess:
 
 def main(file_path: str) -> None:
     data = CsvProcess(file_path)
-    for item in data.data:
-        print(item)
     data.time_sort()
 
     data.fill_spaces()
     data.add_columns()
-
-    for item in data.data:
-        print(item)
 
     data.write_csv("logs/csv")
     data.write_json("logs/json")
 
 
 if __name__ == "__main__":
-    # main('tests/test_data.csv')
+    main("tests/test_data.csv")
     main("tests/correct1.csv")
-    # main('tests/correct2.csv')
-    # main('tests/correct3.csv')
+    main("tests/correct2.csv")
+    main("tests/correct3.csv")
