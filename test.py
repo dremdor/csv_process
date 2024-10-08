@@ -267,7 +267,7 @@ class TestJsonData(unittest.TestCase):
         data.fill_spaces()
         data.add_columns()
 
-        result = data.write_json("logs/")
+        result = data.make_json()
         ans = [
             {
                 "index": "0",

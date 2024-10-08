@@ -131,14 +131,18 @@ class CsvProcess:
             writer = csv.writer(file, delimiter=";")
             writer.writerows(self.data)
 
-    def write_json(self, save_path: str) -> List[Dict[str, Union[str, float]]]:
-        headers = self.data[0]
+    def make_json(self) -> List[Dict[str, Union[str, float]]]:
         json_list = []
+        headers = self.data[0]
 
         for line in self.data[1:]:
             line_json = {headers[i]: line[i] for i in range(len(headers))}
             json_list.append(line_json)
 
+        return json_list
+
+    def write_json(self, save_path: str) -> None:
+        json_list = self.make_json()
         with open(
             f'{save_path}/{datetime.now().strftime("%Y-%m-%d_%H:%M:%S")}.json',
             "w",
@@ -146,19 +150,19 @@ class CsvProcess:
         ) as file:
             json.dump(json_list, file, indent=4)
 
-        return json_list
+    def process(self) -> None:
+        self.time_sort()
+        self.fill_spaces()
+        self.add_columns()
+
+        self.write_csv("logs/csv")
+        self.write_json("logs/json")
 
 
-def main(file_path: str) -> None:
-    data = CsvProcess(file_path)
-    data.time_sort()
-
-    data.fill_spaces()
-    data.add_columns()
-
-    data.write_csv("logs/csv")
-    data.write_json("logs/json")
+def main() -> None:
+    data = CsvProcess("tests/test_data.csv")
+    data.process()
 
 
 if __name__ == "__main__":
-    main("tests/test_data.csv")
+    main()
